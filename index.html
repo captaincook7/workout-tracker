@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Optimal Workout Tracker</title>
+  
+  <!-- PWA Configuration -->
+  <meta name="theme-color" content="#1e293b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Workout Tracker">
+  
+  <!-- Tailwind CSS via CDN (with production warning suppressed) -->
+  <script>
+    // Suppress Tailwind development warning
+    window.tailwindConfig = { silent: true };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React and ReactDOM -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  
+  <!-- Babel for JSX transformation -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  
+  <style>
+    /* Custom scrollbar for mobile */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #1e293b;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3b82f6;
+      border-radius: 2px;
+    }
+    
+    /* Prevent zoom on mobile inputs */
+    input, select, textarea {
+      font-size: 16px;
+    }
+    
+    /* Smooth transitions */
+    * {
+      transition: all 0.2s ease;
+    }
+    
+    /* Loading animation */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: #fff;
+      animation: spin 1s ease-in-out infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+  <div id="root">
+    <!-- Loading placeholder -->
+    <div class="min-h-screen flex items-center justify-center">
+      <div class="text-center p-8 bg-slate-800/70 rounded-2xl backdrop-blur border border-slate-700/50">
+        <div class="loading mb-4 mx-auto"></div>
+        <h2 class="text-xl font-bold text-white mb-2">Loading Workout Tracker</h2>
+        <p class="text-slate-300">This may take a few moments...</p>
+      </div>
+    </div>
+  </div>
+  
+  <script type="text/babel">
+    // Check if all external libraries are loaded
+    function checkDependencies() {
+      if (typeof React === 'undefined') {
+        throw new Error("React is not loaded");
+      }
+      if (typeof ReactDOM === 'undefined') {
+        throw new Error("ReactDOM is not loaded");
+      }
+      if (typeof lucide === 'undefined') {
+        throw new Error("Lucide Icons are not loaded");
+      }
+      return true;
+    }
+
+    try {
+      checkDependencies();
+      
+      const { useState, useEffect, createElement } = React;
+      const { 
+        CheckCircle, 
+        Circle, 
+        Clock, 
+        Calendar, 
+        Target, 
+        Flame, 
+        Droplets, 
+        Activity, 
+        AlertCircle 
+      } = lucide;
+
+      const WorkoutTrackerApp = () => {
+        const [currentDay, setCurrentDay] = useState(new Date().getDay());
+        const [completedItems, setCompletedItems] = useState(() => {
+          const saved = localStorage.getItem('workoutProgress');
+          return saved ? JSON.parse(saved) : {};
+        });
+        const [currentTime, setCurrentTime] = useState(new Date());
+        const [activeReminders, setActiveReminders] = useState([]);
+
+        // Save progress to localStorage whenever completedItems changes
+        useEffect(() => {
+          localStorage.setItem('workoutProgress', JSON.stringify(completedItems));
+        }, [completedItems]);
+
+        // Weekly schedule data
+        const weeklySchedule = {
+          1: { // Monday
+            name: 'F45 Strength + Evening Recovery',
+            morning: [
+              { id: 'm1_mon', time: '6:15-7:00', task: 'F45 strength/resistance class', type: 'workout' },
+              { id: 'm2_mon', time: '7:00-7:15', task: 'Quick cool-down and shower', type: 'recovery' }
+            ],
+            evening: [
+              { id: 'e1_mon', time: '6:00-6:20', task: 'Sauna session (165-185°F)', type: 'sauna' },
+              { id: 'e2_mon', time: '6:20-6:23', task: 'Cold plunge (50-59°F)', type: 'cold' },
+              { id: 'e3_mon', time: '6:25-6:40', task: 'Upper body mobility/stretching', type: 'mobility', video: 'https://www.youtube.com/watch?v=8lDC4Ri9zAQ', title: 'Upper Body Mobility Flow - Tom Merrick' }
+            ]
+          },
+          2: { // Tuesday
+            name: 'Active Recovery + Knees Over Toes',
+            morning: [
+              { id: 'm1_tue', time: 'Flexible', task: 'Light walk or gentle yoga (20-30 min)', type: 'recovery' }
+            ],
+            evening: [
+              { id: 'e1_tue', time: '6:00-6:15', task: 'Knees Over Toes exercises (Session 1)', type: 'kot', video: 'https://www.youtube.com/watch?v=Ht4Z2Ql9c_o', title: 'ATG Split Squat Progression - Ben Patrick' },
+              { id: 'e2_tue', time: '6:15-6:35', task: 'Full body mobility work', type: 'mobility', video: 'https://www.youtube.com/watch?v=L_xrDAtykMI', title: 'Full Body Flow - Yoga with Adriene' },
+              { id: 'e3_tue', time: '6:35-6:50', task: 'Optional relaxation sauna (150-165°F)', type: 'sauna' }
+            ]
+          },
+          3: { // Wednesday
+            name: 'F45 Cardio + Post-Workout Contrast',
+            morning: [
+              { id: 'm1_wed', time: '6:15-7:00', task: 'F45 cardio/HIIT class', type: 'workout' },
+              { id: 'm2_wed', time: '7:05-7:15', task: 'Post-workout sauna (wait 10 min)', type: 'sauna' },
+              { id: 'm3_wed', time: '7:15-7:18', task: 'Cold plunge', type: 'cold' },
+              { id: 'm4_wed', time: '7:18-7:25', task: 'Quick shower', type: 'recovery' }
+            ],
+            evening: [
+              { id: 'e1_wed', time: '6:00-6:15', task: 'Light stretching (lower body focus)', type: 'mobility', video: 'https://www.youtube.com/watch?v=R6zPKURRaAc', title: 'Hip Flexibility & Lower Body - Athlean-X' }
+            ]
+          },
+          4: { // Thursday
+            name: 'F45 Strength + KOT + Evening Recovery',
+            morning: [
+              { id: 'm1_thu', time: '6:15-7:00', task: 'F45 strength/resistance class', type: 'workout' },
+              { id: 'm2_thu', time: '7:00-7:15', task: 'Cool-down and shower', type: 'recovery' }
+            ],
+            evening: [
+              { id: 'e1_thu', time: '6:00-6:15', task: 'Knees Over Toes exercises (Session 2)', type: 'kot', video: 'https://www.youtube.com/watch?v=xBP4VN7K_5w', title: 'Complete KOT Routine - Knees Over Toes Guy' },
+              { id: 'e2_thu', time: '6:15-6:35', task: 'Sauna session (165-185°F)', type: 'sauna' },
+              { id: 'e3_thu', time: '6:35-6:38', task: 'Cold plunge', type: 'cold' },
+              { id: 'e4_thu', time: '6:40-7:00', task: 'Targeted mobility work', type: 'mobility', video: 'https://www.youtube.com/watch?v=qDwCQw7yHzE', title: 'Thoracic Spine Mobility - FRC Mobility' }
+            ]
+          },
+          5: { // Friday
+            name: 'F45 Hybrid + Quick Recovery',
+            morning: [
+              { id: 'm1_fri', time: '6:15-7:00', task: 'F45 hybrid class (cardio + strength)', type: 'workout' },
+              { id: 'm2_fri', time: '7:05-7:13', task: 'Quick sauna (8 min)', type: 'sauna' },
+              { id: 'm3_fri', time: '7:13-7:15', task: 'Cold plunge (2 min)', type: 'cold' },
+              { id: 'm4_fri', time: '7:15-7:20', task: 'Quick shower', type: 'recovery' }
+            ],
+            evening: [
+              { id: 'e1_fri', time: 'Optional', task: 'Rest or gentle movement', type: 'recovery' }
+            ]
+          },
+          6: { // Saturday
+            name: 'Extended Recovery, Mobility & KOT',
+            morning: [
+              { id: 'm1_sat', time: 'Flexible', task: 'Knees Over Toes exercises (Session 3)', type: 'kot', video: 'https://www.youtube.com/watch?v=vYPh3jsWzAo', title: 'Advanced KOT Exercises - Ben Patrick' },
+              { id: 'm2_sat', time: 'Flexible', task: 'Mobility/yoga session (30-45 min)', type: 'mobility', video: 'https://www.youtube.com/watch?v=X3-gKPNyrTA', title: 'Morning Yoga Flow - Yoga with Kassandra' },
+              { id: 'm3_sat', time: 'Flexible', task: 'Extended sauna session (20-25 min)', type: 'sauna' },
+              { id: 'm4_sat', time: 'Flexible', task: 'Cold plunge (3-4 min)', type: 'cold' }
+            ],
+            evening: [
+              { id: 'e1_sat', time: 'Optional', task: 'Light cardio (walk, bike, swim)', type: 'recovery' }
+            ]
+          },
+          0: { // Sunday
+            name: 'Complete Rest or Gentle Movement',
+            morning: [
+              { id: 'm1_sun', time: 'Optional', task: 'Light walk or gentle yoga', type: 'recovery' }
+            ],
+            evening: [
+              { id: 'e1_sun', time: '6:00-6:20', task: 'Preparation mobility for upcoming week', type: 'mobility', video: 'https://www.youtube.com/watch?v=PpEaFLDc_w4', title: 'Recovery Flow - Tom Merrick' }
+            ]
+          }
+        };
+
+        // Smart reminders based on calendar integration simulation
+        const smartReminders = [
+          { time: '10:30', message: 'Take a 5-minute movement break - try some ankle circles and calf raises', type: 'mobility' },
+          { time: '14:00', message: 'Lunch break mobility: Wall sit (30 seconds) and heel walks', type: 'kot' },
+          { time: '16:30', message: 'Afternoon energy boost: 10 deep breaths and shoulder rolls', type: 'mobility' },
+          { time: '17:00', message: 'Workday ending soon - prepare for evening recovery session!', type: 'reminder' }
+        ];
+
+        useEffect(() => {
+          const timer = setInterval(() => {
+            setCurrentTime(new Date());
+            checkForReminders();
+          }, 60000); // Check every minute
+
+          return () => clearInterval(timer);
+        }, []);
+
+        const checkForReminders = () => {
+          const now = new Date();
+          const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+          
+          const reminder = smartReminders.find(r => r.time === timeString);
+          if (reminder && !activeReminders.find(ar => ar.time === timeString)) {
+            setActiveReminders(prev => [...prev, { ...reminder, id: Date.now() }]);
+          }
+        };
+
+        const toggleComplete = (itemId) => {
+          setCompletedItems(prev => ({
+            ...prev,
+            [itemId]: !prev[itemId]
+          }));
+        };
+
+        const dismissReminder = (id) => {
+          setActiveReminders(prev => prev.filter(r => r.id !== id));
+        };
+
+        const getTypeIcon = (type) => {
+          const iconProps = { size: 20 };
+          switch (type) {
+            case 'workout': return createElement(Activity, { ...iconProps, className: "w-5 h-5 text-red-500" });
+            case 'sauna': return createElement(Flame, { ...iconProps, className: "w-5 h-5 text-orange-500" });
+            case 'cold': return createElement(Droplets, { ...iconProps, className: "w-5 h-5 text-blue-500" });
+            case 'mobility': return createElement(Target, { ...iconProps, className: "w-5 h-5 text-green-500" });
+            case 'kot': return createElement(Target, { ...iconProps, className: "w-5 h-5 text-purple-500" });
+            case 'recovery': return createElement(Clock, { ...iconProps, className: "w-5 h-5 text-gray-500" });
+            default: return createElement(Circle, { ...iconProps, className: "w-5 h-5 text-gray-400" });
+          }
+        };
+
+        const getTodaySchedule = () => {
+          return weeklySchedule[currentDay] || { name: 'Rest Day', morning: [], evening: [] };
+        };
+
+        const todaySchedule = getTodaySchedule();
+        const completedToday = Object.keys(completedItems).filter(key => completedItems[key]).length;
+        const totalToday = todaySchedule.morning.length + todaySchedule.evening.length;
+
+        const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        const renderTaskItem = (item) => (
+          createElement('div', { 
+            key: item.id, 
+            className: "flex items-center gap-4 p-4 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-all" 
+          },
+            createElement('button', {
+              onClick: () => toggleComplete(item.id),
+              className: "flex-shrink-0"
+            },
+              completedItems[item.id] ? 
+                createElement(CheckCircle, { size: 24, className: "w-6 h-6 text-green-400" }) :
+                createElement(Circle, { size: 24, className: "w-6 h-6 text-slate-400 hover:text-slate-300" })
+            ),
+            createElement('div', { className: "flex-grow" },
+              createElement('div', { className: "flex items-center gap-2 mb-1 flex-wrap" },
+                getTypeIcon(item.type),
+                createElement('span', { className: "text-sm text-slate-400 font-medium" }, item.time),
+                item.video && createElement('a', { 
+                  href: item.video,
+                  target: "_blank",
+                  rel: "noopener noreferrer",
+                  className: "text-blue-400 hover:text-blue-300 text-xs bg-blue-500/20 px-2 py-1 rounded"
+                }, "📹 Video")
+              ),
+              createElement('p', { 
+                className: `${completedItems[item.id] ? 'line-through text-slate-500' : 'text-slate-100'}`
+              }, item.task),
+              item.title && createElement('p', { className: "text-slate-400 text-xs mt-1 italic" }, item.title)
+            )
+          )
+        );
+
+        return createElement('div', { className: "min-h-screen text-white p-4" },
+          createElement('div', { className: "max-w-4xl mx-auto" },
+            // Header
+            createElement('div', { className: "text-center mb-8" },
+              createElement('h1', { 
+                className: "text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent" 
+              }, "Optimal Workout Tracker"),
+              createElement('p', { className: "text-slate-300" }, "Your complete fitness, recovery & mobility companion")
+            ),
+
+            // Day Navigation
+            createElement('div', { className: "flex justify-center mb-6 gap-2 flex-wrap" },
+              dayNames.map((day, index) => 
+                createElement('button', {
+                  key: index,
+                  onClick: () => setCurrentDay(index),
+                  className: `px-4 py-2 rounded-lg transition-all ${
+                    currentDay === index
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`
+                }, day.slice(0, 3))
+              )
+            ),
+
+            // Progress Overview
+            createElement('div', { className: "bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700" },
+              createElement('div', { className: "flex items-center justify-between mb-4 flex-wrap gap-4" },
+                createElement('h2', { className: "text-2xl font-bold" }, `${dayNames[currentDay]} - ${todaySchedule.name}`),
+                createElement('div', { className: "flex items-center gap-2" },
+                  createElement(Calendar, { size: 20, className: "w-5 h-5 text-blue-400" }),
+                  createElement('span', { className: "text-slate-300" }, 
+                    currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                  )
+                )
+              ),
+              
+              createElement('div', { className: "w-full bg-slate-700 rounded-full h-3 mb-2" },
+                createElement('div', { 
+                  className: "bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300",
+                  style: { width: totalToday > 0 ? `${(completedToday / totalToday) * 100}%` : '0%' }
+                })
+              ),
+              createElement('p', { className: "text-slate-300 text-sm" }, 
+                `${completedToday} of ${totalToday} tasks completed today`
+              )
+            ),
+
+            // Smart Reminders
+            activeReminders.length > 0 && createElement('div', { className: "mb-6" },
+              activeReminders.map((reminder) =>
+                createElement('div', { 
+                  key: reminder.id,
+                  className: "bg-gradient-to-r from-yellow-600/20 to-orange-600/20 backdrop-blur rounded-lg p-4 mb-3 border border-yellow-500/30" 
+                },
+                  createElement('div', { className: "flex items-start justify-between" },
+                    createElement('div', { className: "flex items-center gap-3" },
+                      createElement(AlertCircle, { size: 20, className: "w-5 h-5 text-yellow-400 flex-shrink-0" }),
+                      createElement('div', null,
+                        createElement('p', { className: "font-medium text-yellow-100" }, reminder.message),
+                        createElement('p', { className: "text-yellow-300 text-sm" }, `Suggested at ${reminder.time}`)
+                      )
+                    ),
+                    createElement('button', {
+                      onClick: () => dismissReminder(reminder.id),
+                      className: "text-yellow-300 hover:text-yellow-100 transition-colors text-xl leading-none"
+                    }, "×")
+                  )
+                )
+              )
+            ),
+
+            // Morning Schedule
+            todaySchedule.morning.length > 0 && createElement('div', { className: "bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700" },
+              createElement('h3', { className: "text-xl font-bold mb-4 flex items-center gap-2" },
+                createElement('div', { className: "w-3 h-3 rounded-full bg-yellow-400" }),
+                "Morning Schedule (6:15am - 8:15am)"
+              ),
+              createElement('div', { className: "space-y-3" },
+                todaySchedule.morning.map((item) => renderTaskItem(item))
+              )
+            ),
+
+            // Evening Schedule
+            todaySchedule.evening.length > 0 && createElement('div', { className: "bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700" },
+              createElement('h3', { className: "text-xl font-bold mb-4 flex items-center gap-2" },
+                createElement('div', { className: "w-3 h-3 rounded-full bg-purple-400" }),
+                "Evening Schedule"
+              ),
+              createElement('div', { className: "space-y-3" },
+                todaySchedule.evening.map((item) => renderTaskItem(item))
+              )
+            ),
+
+            // Quick Actions
+            createElement('div', { className: "bg-slate-800/50 backdrop-blur rounded-2xl p-6 border border-slate-700 mb-6" },
+              createElement('h3', { className: "text-xl font-bold mb-4" }, "Quick Movement Breaks"),
+              createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 gap-6" },
+                createElement('div', { className: "bg-gradient-to-r from-green-600/20 to-blue-600/20 p-4 rounded-lg border border-green-500/30" },
+                  createElement('h4', { className: "font-semibold text-green-100 mb-3 flex items-center gap-2 flex-wrap" },
+                    "5-Minute Mobility",
+                    createElement('a', { 
+                      href: "https://www.youtube.com/watch?v=2kZhsUm8CeA",
+                      target: "_blank",
+                      rel: "noopener noreferrer",
+                      className: "text-xs bg-green-500/30 px-2 py-1 rounded text-green-200 hover:text-green-100"
+                    }, "📹 Demo")
+                  ),
+                  createElement('div', { className: "space-y-2 text-green-200 text-sm" },
+                    createElement('div', { className: "flex items-center gap-2" },
+                      createElement('div', { className: "w-2 h-2 bg-green-400 rounded-full" }),
+                      createElement('span', null, "Neck rolls (5 each direction)")
+                    ),
+                    createElement('div', { className: "flex items-center gap-2" },
+                      createElement('div', { className: "w-2 h-2 bg-green-400 rounded-full" }),
+                      createElement('span', null, "Shoulder shrugs & arm circles")
+                    ),
+                    createElement('div', { className: "flex items-center gap-2" },
+                      createElement('div', { className: "w-2 h-2 bg-green-400 rounded-full" }),
+                      createElement('span', null, "Hip circles (10 each way)")
+                    ),
+                    createElement('div', { className: "flex items-center gap-2" },
+                      createElement('div', { className: "w-2 h-2 bg-green-400 rounded-full" }),
+                      createElement('span', null, "Ankle circles & calf raises")
+                    )
+                  ),
+                  createElement('div', { className: "mt-3 p-2 bg-green-600/10 rounded text-xs text-green-300" },
+                    "💡 Perfect between long meetings"
+                  )
+                ),
+                
+                createElement('div', { className: "bg-gradient-to-r from-purple-600/20 to-pink-600/20 p-4 rounded-lg border border-purple-500/30" },
+                  createElement('h4', { className: "font-semibold text-purple-100 mb-3 flex items-center gap-2 flex-wrap" },
+                    "KOT Quick Hits",
+                    createElement('a', { 
+                      href: "https://www.youtube.com/watch?v=Ht4Z2Ql9c_o",
+                      target: "_blank",
+                      rel: "noopener noreferrer",
+                      className: "text-xs bg-purple-500/30 px-2 py-1 rounded text-purple-200 hover:text-purple-100"
+                    }, "📹 Form")
+                  ),
+                  createElement('div', { className: "space-y-2 text-purple-200 text-sm" },
+                    createElement('div', { className: "flex items-center gap-2" },
+                      createElement('div', { className: "w-2 h-2 bg-purple-400 rounded-full" }),
+                      createElement('span', null, "Heel walks (10 forward/back)")
+                    ),
+                    createElement('div', { className: "flex items-center gap-2" },
+                      createElement('div', { className: "w-2 h-2 bg-purple-400 rounded-full" }),
+                      createElement('span', null, "Wall sit (30 seconds)")
+                    ),
+                    createElement('div', { className: "flex items-center gap-2" },
+                      createElement('div', { className: "w-2 h-2 bg-purple-400 rounded-full" }),
+                      createElement('span', null, "Single-leg glute bridges (10 each)")
+                    ),
+                    createElement('div', { className: "flex items-center gap-2" },
+                      createElement('div', { className: "w-2 h-2 bg-purple-400 rounded-full" }),
+                      createElement('span', null, "Calf raises (15 total)")
+                    )
+                  ),
+                  createElement('div', { className: "mt-3 p-2 bg-purple-600/10 rounded text-xs text-purple-300" },
+                    "💪 Builds bulletproof knees daily"
+                  )
+                )
+              )
+            ),
+
+            // Weekly Mobility Focus
+            createElement('div', { className: "bg-slate-800/50 backdrop-blur rounded-2xl p-6 border border-slate-700" },
+              createElement('h3', { className: "text-xl font-bold mb-4" }, "Weekly Mobility Targets"),
+              createElement('div', { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" },
+                createElement('div', { className: "bg-gradient-to-b from-red-600/20 to-red-700/20 p-3 rounded-lg border border-red-500/30" },
+                  createElement('h5', { className: "font-medium text-red-100 mb-2" }, "Mon: Upper Body"),
+                  createElement('p', { className: "text-red-200 text-sm" }, "Shoulders, neck, thoracic spine")
+                ),
+                createElement('div', { className: "bg-gradient-to-b from-green-600/20 to-green-700/20 p-3 rounded-lg border border-green-500/30" },
+                  createElement('h5', { className: "font-medium text-green-100 mb-2" }, "Tue: Full Body"),
+                  createElement('p', { className: "text-green-200 text-sm" }, "Dynamic movement flow")
+                ),
+                createElement('div', { className: "bg-gradient-to-b from-blue-600/20 to-blue-700/20 p-3 rounded-lg border border-blue-500/30" },
+                  createElement('h5', { className: "font-medium text-blue-100 mb-2" }, "Wed: Hips & Legs"),
+                  createElement('p', { className: "text-blue-200 text-sm" }, "Post-cardio recovery focus")
+                ),
+                createElement('div', { className: "bg-gradient-to-b from-yellow-600/20 to-yellow-700/20 p-3 rounded-lg border border-yellow-500/30" },
+                  createElement('h5', { className: "font-medium text-yellow-100 mb-2" }, "Thu: Spine"),
+                  createElement('p', { className: "text-yellow-200 text-sm" }, "Thoracic & cervical mobility")
+                ),
+                createElement('div', { className: "bg-gradient-to-b from-purple-600/20 to-purple-700/20 p-3 rounded-lg border border-purple-500/30" },
+                  createElement('h5', { className: "font-medium text-purple-100 mb-2" }, "Sat: Comprehensive"),
+                  createElement('p', { className: "text-purple-200 text-sm" }, "Extended yoga flow")
+                ),
+                createElement('div', { className: "bg-gradient-to-b from-indigo-600/20 to-indigo-700/20 p-3 rounded-lg border border-indigo-500/30" },
+                  createElement('h5', { className: "font-medium text-indigo-100 mb-2" }, "Sun: Recovery"),
+                  createElement('p', { className: "text-indigo-200 text-sm" }, "Gentle preparation flow")
+                )
+              )
+            ),
+
+            // Legend
+            createElement('div', { className: "mt-6 text-center" },
+              createElement('div', { className: "flex justify-center gap-6 flex-wrap text-sm" },
+                createElement('div', { className: "flex items-center gap-2" },
+                  createElement(Activity, { size: 16, className: "w-4 h-4 text-red-500" }),
+                  createElement('span', null, "Workout")
+                ),
+                createElement('div', { className: "flex items-center gap-2" },
+                  createElement(Flame, { size: 16, className: "w-4 h-4 text-orange-500" }),
+                  createElement('span', null, "Sauna")
+                ),
+                createElement('div', { className: "flex items-center gap-2" },
+                  createElement(Droplets, { size: 16, className: "w-4 h-4 text-blue-500" }),
+                  createElement('span', null, "Cold Plunge")
+                ),
+                createElement('div', { className: "flex items-center gap-2" },
+                  createElement(Target, { size: 16, className: "w-4 h-4 text-green-500" }),
+                  createElement('span', null, "Mobility")
+                ),
+                createElement('div', { className: "flex items-center gap-2" },
+                  createElement(Target, { size: 16, className: "w-4 h-4 text-purple-500" }),
+                  createElement('span', null, "Knees Over Toes")
+                )
+              )
+            )
+          )
+        );
+      };
+
+      ReactDOM.render(createElement(WorkoutTrackerApp), document.getElementById('root'));
+      
+    } catch (error) {
+      console.error("Error initializing app:", error);
+      document.getElementById('root').innerHTML = `
+        <div class="min-h-screen flex items-center justify-center p-4">
+          <div class="bg-red-900/80 text-white p-6 rounded-lg max-w-md text-center backdrop-blur border border-red-700/50">
+            <h2 class="text-xl font-bold mb-2">Application Error</h2>
+            <p class="mb-4">Failed to initialize the application: ${error.message}</p>
+            <button onclick="window.location.reload()" class="bg-red-700 hover:bg-red-600 px-4 py-2 rounded">
+              Retry
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>
