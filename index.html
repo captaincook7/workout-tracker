@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Optimal Workout Tracker</title>
+    <title>Optimal Workout Tracker with Calendar Integration</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -40,6 +40,10 @@
         .icon-mobility { color: #22c55e; }
         .icon-kot { color: #a855f7; }
         .icon-recovery { color: #6b7280; }
+        .calendar-event {
+            border-left: 3px solid #3b82f6;
+            background: rgba(59, 130, 246, 0.1);
+        }
     </style>
 </head>
 <body>
@@ -53,6 +57,9 @@
             const [completedItems, setCompletedItems] = useState({});
             const [currentTime, setCurrentTime] = useState(new Date());
             const [activeReminders, setActiveReminders] = useState([]);
+            const [calendarEvents, setCalendarEvents] = useState([]);
+            const [isGoogleSignedIn, setIsGoogleSignedIn] = useState(false);
+            const [adjustedSchedule, setAdjustedSchedule] = useState({});
 
             // Weekly schedule data
             const weeklySchedule = {
@@ -156,6 +163,13 @@
                 return () => clearInterval(timer);
             }, []);
 
+            useEffect(() => {
+                // Check if we have calendar events and adjust schedule accordingly
+                if (calendarEvents.length > 0) {
+                    adjustScheduleBasedOnCalendar();
+                }
+            }, [calendarEvents, currentDay]);
+
             const checkForReminders = () => {
                 const now = new Date();
                 const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -202,7 +216,99 @@
             };
 
             const getTodaySchedule = () => {
+                // Use adjusted schedule if available, otherwise use default schedule
+                if (adjustedSchedule[currentDay] && Object.keys(adjustedSchedule[currentDay]).length > 0) {
+                    return adjustedSchedule[currentDay];
+                }
                 return weeklySchedule[currentDay] || { name: 'Rest Day', morning: [], evening: [] };
+            };
+
+            const handleGoogleSignIn = () => {
+                // In a real implementation, this would use the Google API client library
+                // For demonstration, we'll simulate a successful sign-in
+                setIsGoogleSignedIn(true);
+                simulateCalendarFetch();
+            };
+
+            const handleGoogleSignOut = () => {
+                setIsGoogleSignedIn(false);
+                setCalendarEvents([]);
+                setAdjustedSchedule({});
+            };
+
+            const simulateCalendarFetch = () => {
+                // Simulate fetching calendar events
+                // In a real implementation, this would use the Google Calendar API
+                const today = new Date();
+                const simulatedEvents = [
+                    {
+                        summary: 'Team Meeting',
+                        start: { dateTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0).toISOString() },
+                        end: { dateTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 10, 30).toISOString() }
+                    },
+                    {
+                        summary: 'Lunch with Client',
+                        start: { dateTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 12, 0).toISOString() },
+                        end: { dateTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 13, 0).toISOString() }
+                    },
+                    {
+                        summary: 'Project Review',
+                        start: { dateTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 15, 0).toISOString() },
+                        end: { dateTime: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 16, 30).toISOString() }
+                    }
+                ];
+                setCalendarEvents(simulatedEvents);
+            };
+
+            const adjustScheduleBasedOnCalendar = () => {
+                // Adjust schedule based on calendar events
+                // This is a simplified version - a real implementation would be more sophisticated
+                const todayEvents = calendarEvents.filter(event => {
+                    const eventDate = new Date(event.start.dateTime);
+                    return eventDate.getDay() === currentDay;
+                });
+
+                if (todayEvents.length === 0) {
+                    setAdjustedSchedule(prev => ({ ...prev, [currentDay]: weeklySchedule[currentDay] }));
+                    return;
+                }
+
+                // Create a copy of today's schedule
+                const adjustedDaySchedule = { ...weeklySchedule[currentDay] };
+                
+                // Check for morning conflicts (before 12 PM)
+                const morningEvents = todayEvents.filter(event => {
+                    const eventTime = new Date(event.start.dateTime).getHours();
+                    return eventTime < 12;
+                });
+
+                // Check for evening conflicts (after 4 PM)
+                const eveningEvents = todayEvents.filter(event => {
+                    const eventTime = new Date(event.start.dateTime).getHours();
+                    return eventTime >= 16;
+                });
+
+                // Adjust morning schedule if there are conflicts
+                if (morningEvents.length > 0 && adjustedDaySchedule.morning) {
+                    adjustedDaySchedule.morning = adjustedDaySchedule.morning.map(item => {
+                        if (item.time !== 'Flexible' && item.time !== 'Optional') {
+                            return { ...item, time: 'Flexible', task: `${item.task} (Rescheduled due to conflict)` };
+                        }
+                        return item;
+                    });
+                }
+
+                // Adjust evening schedule if there are conflicts
+                if (eveningEvents.length > 0 && adjustedDaySchedule.evening) {
+                    adjustedDaySchedule.evening = adjustedDaySchedule.evening.map(item => {
+                        if (item.time !== 'Flexible' && item.time !== 'Optional') {
+                            return { ...item, time: 'Flexible', task: `${item.task} (Rescheduled due to conflict)` };
+                        }
+                        return item;
+                    });
+                }
+
+                setAdjustedSchedule(prev => ({ ...prev, [currentDay]: adjustedDaySchedule }));
             };
 
             const todaySchedule = getTodaySchedule();
@@ -220,7 +326,55 @@
                                 Optimal Workout Tracker
                             </h1>
                             <p className="text-slate-300">Your complete fitness, recovery & mobility companion</p>
+                            
+                            {/* Google Calendar Integration */}
+                            <div className="mt-4">
+                                {!isGoogleSignedIn ? (
+                                    <button 
+                                        onClick={handleGoogleSignIn}
+                                        className="bg-white text-gray-800 px-4 py-2 rounded-lg flex items-center justify-center gap-2 mx-auto hover:bg-gray-100 transition-colors"
+                                    >
+                                        <span>📅</span>
+                                        Connect Google Calendar
+                                    </button>
+                                ) : (
+                                    <div className="flex flex-col items-center gap-2">
+                                        <button 
+                                            onClick={handleGoogleSignOut}
+                                            className="bg-red-500 text-white px-4 py-2 rounded-lg flex items-center justify-center gap-2 mx-auto hover:bg-red-600 transition-colors"
+                                        >
+                                            <span>📅</span>
+                                            Disconnect Calendar
+                                        </button>
+                                        <p className="text-green-400 text-sm">Calendar connected - schedule will adjust based on your events</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
+
+                        {/* Calendar Events */}
+                        {isGoogleSignedIn && calendarEvents.length > 0 && (
+                            <div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700">
+                                <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                    <span>📅</span>
+                                    Today's Calendar Events
+                                </h3>
+                                <div className="space-y-2">
+                                    {calendarEvents.map((event, index) => {
+                                        const startTime = new Date(event.start.dateTime);
+                                        const endTime = new Date(event.end.dateTime);
+                                        return (
+                                            <div key={index} className="calendar-event p-3 rounded-lg">
+                                                <p className="font-medium">{event.summary}</p>
+                                                <p className="text-slate-300 text-sm">
+                                                    {startTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - {endTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                                </p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Day Navigation */}
                         <div className="flex justify-center mb-6 gap-2 flex-wrap">
@@ -248,6 +402,12 @@
                                     <span className="text-slate-300">{currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                 </div>
                             </div>
+                            
+                            {isGoogleSignedIn && adjustedSchedule[currentDay] && (
+                                <div className="mb-3 p-3 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                                    <p className="text-blue-300 text-sm">⚠️ Schedule adjusted based on your calendar events</p>
+                                </div>
+                            )}
                             
                             <div className="w-full bg-slate-700 rounded-full h-3 mb-2">
                                 <div 
@@ -290,7 +450,7 @@
                                 Morning Schedule (6:15am - 8:15am)
                             </h3>
                             <div className="space-y-3">
-                                {todaySchedule.morning.map((item) => (
+                                {todaySchedule.morning && todaySchedule.morning.map((item) => (
                                     <div key={item.id} className={`flex items-center gap-4 p-4 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-all task-complete ${completedItems[item.id] ? 'opacity-70' : ''}`}>
                                         <button
                                             onClick={() => toggleComplete(item.id)}
@@ -323,7 +483,7 @@
                                 Evening Schedule
                             </h3>
                             <div className="space-y-3">
-                                {todaySchedule.evening.map((item) => (
+                                {todaySchedule.evening && todaySchedule.evening.map((item) => (
                                     <div key={item.id} className={`flex items-center gap-4 p-4 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-all task-complete ${completedItems[item.id] ? 'opacity-70' : ''}`}>
                                         <button
                                             onClick={() => toggleComplete(item.id)}
