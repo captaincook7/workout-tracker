@@ -1,0 +1,446 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.7">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">import React, { useState, useEffect } from 'react';</p>
+<p class="p1">import { CheckCircle, Circle, Clock, Calendar, Target, Flame, Droplets, Activity, AlertCircle } from 'lucide-react';</p>
+<p class="p2"><br></p>
+<p class="p1">const WorkoutTrackerApp = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const [currentDay, setCurrentDay] = useState(new Date().getDay());</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const [completedItems, setCompletedItems] = useState({});</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const [currentTime, setCurrentTime] = useState(new Date());</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const [activeReminders, setActiveReminders] = useState([]);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// Weekly schedule data</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const weeklySchedule = {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>1: { // Monday</p>
+<p class="p1"><span class="Apple-converted-space">      </span>name: 'F45 Strength + Evening Recovery',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>morning: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm1', time: '6:15-7:00', task: 'F45 strength/resistance class', type: 'workout' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm2', time: '7:00-7:15', task: 'Quick cool-down and shower', type: 'recovery' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>],</p>
+<p class="p1"><span class="Apple-converted-space">      </span>evening: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e1', time: '6:00-6:20', task: 'Sauna session (165-185°F)', type: 'sauna' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e2', time: '6:20-6:23', task: 'Cold plunge (50-59°F)', type: 'cold' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e3', time: '6:25-6:40', task: 'Upper body mobility/stretching', type: 'mobility' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>2: { // Tuesday</p>
+<p class="p1"><span class="Apple-converted-space">      </span>name: 'Active Recovery + Knees Over Toes',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>morning: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm1', time: 'Flexible', task: 'Light walk or gentle yoga (20-30 min)', type: 'recovery' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>],</p>
+<p class="p1"><span class="Apple-converted-space">      </span>evening: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e1', time: '6:00-6:15', task: 'Knees Over Toes exercises (Session 1)', type: 'kot' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e2', time: '6:15-6:35', task: 'Full body mobility work', type: 'mobility' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e3', time: '6:35-6:50', task: 'Optional relaxation sauna (150-165°F)', type: 'sauna' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>3: { // Wednesday</p>
+<p class="p1"><span class="Apple-converted-space">      </span>name: 'F45 Cardio + Post-Workout Contrast',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>morning: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm1', time: '6:15-7:00', task: 'F45 cardio/HIIT class', type: 'workout' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm2', time: '7:05-7:15', task: 'Post-workout sauna (wait 10 min)', type: 'sauna' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm3', time: '7:15-7:18', task: 'Cold plunge', type: 'cold' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm4', time: '7:18-7:25', task: 'Quick shower', type: 'recovery' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>],</p>
+<p class="p1"><span class="Apple-converted-space">      </span>evening: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e1', time: '6:00-6:15', task: 'Light stretching (lower body focus)', type: 'mobility' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>4: { // Thursday</p>
+<p class="p1"><span class="Apple-converted-space">      </span>name: 'F45 Strength + KOT + Evening Recovery',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>morning: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm1', time: '6:15-7:00', task: 'F45 strength/resistance class', type: 'workout' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm2', time: '7:00-7:15', task: 'Cool-down and shower', type: 'recovery' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>],</p>
+<p class="p1"><span class="Apple-converted-space">      </span>evening: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e1', time: '6:00-6:15', task: 'Knees Over Toes exercises (Session 2)', type: 'kot' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e2', time: '6:15-6:35', task: 'Sauna session (165-185°F)', type: 'sauna' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e3', time: '6:35-6:38', task: 'Cold plunge', type: 'cold' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e4', time: '6:40-7:00', task: 'Targeted mobility work', type: 'mobility' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>5: { // Friday</p>
+<p class="p1"><span class="Apple-converted-space">      </span>name: 'F45 Hybrid + Quick Recovery',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>morning: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm1', time: '6:15-7:00', task: 'F45 hybrid class (cardio + strength)', type: 'workout' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm2', time: '7:05-7:13', task: 'Quick sauna (8 min)', type: 'sauna' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm3', time: '7:13-7:15', task: 'Cold plunge (2 min)', type: 'cold' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm4', time: '7:15-7:20', task: 'Quick shower', type: 'recovery' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>],</p>
+<p class="p1"><span class="Apple-converted-space">      </span>evening: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e1', time: 'Optional', task: 'Rest or gentle movement', type: 'recovery' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>6: { // Saturday</p>
+<p class="p1"><span class="Apple-converted-space">      </span>name: 'Extended Recovery, Mobility &amp; KOT',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>morning: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm1', time: 'Flexible', task: 'Knees Over Toes exercises (Session 3)', type: 'kot' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm2', time: 'Flexible', task: 'Mobility/yoga session (30-45 min)', type: 'mobility' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm3', time: 'Flexible', task: 'Extended sauna session (20-25 min)', type: 'sauna' },</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm4', time: 'Flexible', task: 'Cold plunge (3-4 min)', type: 'cold' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>],</p>
+<p class="p1"><span class="Apple-converted-space">      </span>evening: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e1', time: 'Optional', task: 'Light cardio (walk, bike, swim)', type: 'recovery' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>},</p>
+<p class="p1"><span class="Apple-converted-space">    </span>0: { // Sunday</p>
+<p class="p1"><span class="Apple-converted-space">      </span>name: 'Complete Rest or Gentle Movement',</p>
+<p class="p1"><span class="Apple-converted-space">      </span>morning: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'm1', time: 'Optional', task: 'Light walk or gentle yoga', type: 'recovery' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>],</p>
+<p class="p1"><span class="Apple-converted-space">      </span>evening: [</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{ id: 'e1', time: '6:00-6:20', task: 'Preparation mobility for upcoming week', type: 'mobility' }</p>
+<p class="p1"><span class="Apple-converted-space">      </span>]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>// Smart reminders based on calendar integration simulation</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const smartReminders = [</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ time: '10:30', message: 'Take a 5-minute movement break - try some ankle circles and calf raises', type: 'mobility' },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ time: '14:00', message: 'Lunch break mobility: Wall sit (30 seconds) and heel walks', type: 'kot' },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ time: '16:30', message: 'Afternoon energy boost: 10 deep breaths and shoulder rolls', type: 'mobility' },</p>
+<p class="p1"><span class="Apple-converted-space">    </span>{ time: '17:00', message: 'Workday ending soon - prepare for evening recovery session!', type: 'reminder' }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>];</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>useEffect(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const timer = setInterval(() =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>setCurrentTime(new Date());</p>
+<p class="p1"><span class="Apple-converted-space">      </span>checkForReminders();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}, 60000); // Check every minute</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>return () =&gt; clearInterval(timer);</p>
+<p class="p1"><span class="Apple-converted-space">  </span>}, []);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const checkForReminders = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const now = new Date();</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;</p>
+<p class="p2"><span class="Apple-converted-space">    </span></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const reminder = smartReminders.find(r =&gt; r.time === timeString);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>if (reminder &amp;&amp; !activeReminders.find(ar =&gt; ar.time === timeString)) {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>setActiveReminders(prev =&gt; [...prev, reminder]);</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const toggleComplete = (itemId) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>setCompletedItems(prev =&gt; ({</p>
+<p class="p1"><span class="Apple-converted-space">      </span>...prev,</p>
+<p class="p1"><span class="Apple-converted-space">      </span>[itemId]: !prev[itemId]</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const dismissReminder = (time) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>setActiveReminders(prev =&gt; prev.filter(r =&gt; r.time !== time));</p>
+<p class="p1"><span class="Apple-converted-space">  </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const getTypeIcon = (type) =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>switch (type) {</p>
+<p class="p1"><span class="Apple-converted-space">      </span>case 'workout': return &lt;Activity className="w-5 h-5 text-red-500" /&gt;;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>case 'sauna': return &lt;Flame className="w-5 h-5 text-orange-500" /&gt;;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>case 'cold': return &lt;Droplets className="w-5 h-5 text-blue-500" /&gt;;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>case 'mobility': return &lt;Target className="w-5 h-5 text-green-500" /&gt;;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>case 'kot': return &lt;Target className="w-5 h-5 text-purple-500" /&gt;;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>case 'recovery': return &lt;Clock className="w-5 h-5 text-gray-500" /&gt;;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>default: return &lt;Circle className="w-5 h-5 text-gray-400" /&gt;;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1"><span class="Apple-converted-space">  </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const getTodaySchedule = () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>return weeklySchedule[currentDay] || { name: 'Rest Day', morning: [], evening: [] };</p>
+<p class="p1"><span class="Apple-converted-space">  </span>};</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const todaySchedule = getTodaySchedule();</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const completedToday = Object.values(completedItems).filter(Boolean).length;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>const totalToday = todaySchedule.morning.length + todaySchedule.evening.length;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">  </span>return (</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white p-4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;div className="max-w-4xl mx-auto"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{/* Header */}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div className="text-center mb-8"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>Optimal Workout Tracker</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/h1&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;p className="text-slate-300"&gt;Your complete fitness, recovery &amp; mobility companion&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>{/* Day Navigation */}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div className="flex justify-center mb-6 gap-2 flex-wrap"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>{dayNames.map((day, index) =&gt; (</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;button</p>
+<p class="p1"><span class="Apple-converted-space">              </span>key={index}</p>
+<p class="p1"><span class="Apple-converted-space">              </span>onClick={() =&gt; setCurrentDay(index)}</p>
+<p class="p1"><span class="Apple-converted-space">              </span>className={`px-4 py-2 rounded-lg transition-all ${</p>
+<p class="p1"><span class="Apple-converted-space">                </span>currentDay === index</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>? 'bg-blue-600 text-white shadow-lg'</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>: 'bg-slate-700 text-slate-300 hover:bg-slate-600'</p>
+<p class="p1"><span class="Apple-converted-space">              </span>}`}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>{day.slice(0, 3)}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>))}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>{/* Progress Overview */}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div className="flex items-center justify-between mb-4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;h2 className="text-2xl font-bold"&gt;{dayNames[currentDay]} - {todaySchedule.name}&lt;/h2&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;Calendar className="w-5 h-5 text-blue-400" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;span className="text-slate-300"&gt;{currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p2"><span class="Apple-converted-space">          </span></p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div className="w-full bg-slate-700 rounded-full h-3 mb-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">              </span>className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300"</p>
+<p class="p1"><span class="Apple-converted-space">              </span>style={{ width: totalToday &gt; 0 ? `${(completedToday / totalToday) * 100}%` : '0%' }}</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;p className="text-slate-300 text-sm"&gt;{completedToday} of {totalToday} tasks completed today&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>{/* Smart Reminders */}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>{activeReminders.length &gt; 0 &amp;&amp; (</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div className="mb-6"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>{activeReminders.map((reminder, index) =&gt; (</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div key={index} className="bg-gradient-to-r from-yellow-600/20 to-orange-600/20 backdrop-blur rounded-lg p-4 mb-3 border border-yellow-500/30"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="flex items-start justify-between"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div className="flex items-center gap-3"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;AlertCircle className="w-5 h-5 text-yellow-400 flex-shrink-0" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                      </span>&lt;p className="font-medium text-yellow-100"&gt;{reminder.message}&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                      </span>&lt;p className="text-yellow-300 text-sm"&gt;Suggested at {reminder.time}&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;button</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>onClick={() =&gt; dismissReminder(reminder.time)}</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>className="text-yellow-300 hover:text-yellow-100 transition-colors"</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>×</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>))}</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>)}</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>{/* Morning Schedule */}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;h3 className="text-xl font-bold mb-4 flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="w-3 h-3 rounded-full bg-yellow-400"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>Morning Schedule (6:15am - 8:15am)</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div className="space-y-3"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>{todaySchedule.morning.map((item) =&gt; (</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div key={item.id} className="flex items-center gap-4 p-4 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-all"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;button</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>onClick={() =&gt; toggleComplete(item.id)}</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>className="flex-shrink-0"</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>{completedItems[item.id] ? (</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;CheckCircle className="w-6 h-6 text-green-400" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>) : (</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;Circle className="w-6 h-6 text-slate-400 hover:text-slate-300" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>)}</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="flex-grow"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div className="flex items-center gap-2 mb-1"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>{getTypeIcon(item.type)}</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;span className="text-sm text-slate-400 font-medium"&gt;{item.time}&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;p className={`${completedItems[item.id] ? 'line-through text-slate-500' : 'text-slate-100'}`}&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>{item.task}</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>))}</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>{/* Evening Schedule */}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;h3 className="text-xl font-bold mb-4 flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="w-3 h-3 rounded-full bg-purple-400"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>Evening Schedule</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div className="space-y-3"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>{todaySchedule.evening.map((item) =&gt; (</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div key={item.id} className="flex items-center gap-4 p-4 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-all"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;button</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>onClick={() =&gt; toggleComplete(item.id)}</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>className="flex-shrink-0"</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>{completedItems[item.id] ? (</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;CheckCircle className="w-6 h-6 text-green-400" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>) : (</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;Circle className="w-6 h-6 text-slate-400 hover:text-slate-300" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>)}</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="flex-grow"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div className="flex items-center gap-2 mb-1"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>{getTypeIcon(item.type)}</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;span className="text-sm text-slate-400 font-medium"&gt;{item.time}&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;p className={`${completedItems[item.id] ? 'line-through text-slate-500' : 'text-slate-100'}`}&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>{item.task}</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>))}</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>{/* Quick Actions */}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 border border-slate-700 mb-6"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;h3 className="text-xl font-bold mb-4"&gt;Quick Movement Breaks&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div className="grid grid-cols-1 md:grid-cols-2 gap-6"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="bg-gradient-to-r from-green-600/20 to-blue-600/20 p-4 rounded-lg border border-green-500/30"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;h4 className="font-semibold text-green-100 mb-3 flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>5-Minute Mobility</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;a<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                  </span>href="https://www.youtube.com/watch?v=2kZhsUm8CeA"<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                  </span>target="_blank"<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                  </span>rel="noopener noreferrer"</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>className="text-xs bg-green-500/30 px-2 py-1 rounded text-green-200 hover:text-green-100"</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>📹 Demo</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/h4&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div className="space-y-2 text-green-200 text-sm"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div className="w-2 h-2 bg-green-400 rounded-full"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;span&gt;Neck rolls (5 each direction)&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div className="w-2 h-2 bg-green-400 rounded-full"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;span&gt;Shoulder shrugs &amp; arm circles&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div className="w-2 h-2 bg-green-400 rounded-full"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;span&gt;Hip circles (10 each way)&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div className="w-2 h-2 bg-green-400 rounded-full"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;span&gt;Ankle circles &amp; calf raises&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div className="mt-3 p-2 bg-green-600/10 rounded text-xs text-green-300"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>💡 Perfect between long meetings</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p2"><span class="Apple-converted-space">            </span></p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 p-4 rounded-lg border border-purple-500/30"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;h4 className="font-semibold text-purple-100 mb-3 flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>KOT Quick Hits</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;a<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                  </span>href="https://www.youtube.com/watch?v=Ht4Z2Ql9c_o"<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                  </span>target="_blank"<span class="Apple-converted-space"> </span></p>
+<p class="p1"><span class="Apple-converted-space">                  </span>rel="noopener noreferrer"</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>className="text-xs bg-purple-500/30 px-2 py-1 rounded text-purple-200 hover:text-purple-100"</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>📹 Form</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/h4&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div className="space-y-2 text-purple-200 text-sm"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div className="w-2 h-2 bg-purple-400 rounded-full"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;span&gt;Heel walks (10 forward/back)&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div className="w-2 h-2 bg-purple-400 rounded-full"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;span&gt;Wall sit (30 seconds)&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div className="w-2 h-2 bg-purple-400 rounded-full"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;span&gt;Single-leg glute bridges (10 each)&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;div className="w-2 h-2 bg-purple-400 rounded-full"&gt;&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                  </span>&lt;span&gt;Calf raises (15 total)&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;div className="mt-3 p-2 bg-purple-600/10 rounded text-xs text-purple-300"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>💪 Builds bulletproof knees daily</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>{/* Weekly Mobility Focus */}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 border border-slate-700"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;h3 className="text-xl font-bold mb-4"&gt;Weekly Mobility Targets&lt;/h3&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="bg-gradient-to-b from-red-600/20 to-red-700/20 p-3 rounded-lg border border-red-500/30"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;h5 className="font-medium text-red-100 mb-2"&gt;Mon: Upper Body&lt;/h5&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;p className="text-red-200 text-sm"&gt;Shoulders, neck, thoracic spine&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="bg-gradient-to-b from-green-600/20 to-green-700/20 p-3 rounded-lg border border-green-500/30"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;h5 className="font-medium text-green-100 mb-2"&gt;Tue: Full Body&lt;/h5&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;p className="text-green-200 text-sm"&gt;Dynamic movement flow&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="bg-gradient-to-b from-blue-600/20 to-blue-700/20 p-3 rounded-lg border border-blue-500/30"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;h5 className="font-medium text-blue-100 mb-2"&gt;Wed: Hips &amp; Legs&lt;/h5&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;p className="text-blue-200 text-sm"&gt;Post-cardio recovery focus&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="bg-gradient-to-b from-yellow-600/20 to-yellow-700/20 p-3 rounded-lg border border-yellow-500/30"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;h5 className="font-medium text-yellow-100 mb-2"&gt;Thu: Spine&lt;/h5&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;p className="text-yellow-200 text-sm"&gt;Thoracic &amp; cervical mobility&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="bg-gradient-to-b from-purple-600/20 to-purple-700/20 p-3 rounded-lg border border-purple-500/30"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;h5 className="font-medium text-purple-100 mb-2"&gt;Sat: Comprehensive&lt;/h5&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;p className="text-purple-200 text-sm"&gt;Extended yoga flow&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="bg-gradient-to-b from-indigo-600/20 to-indigo-700/20 p-3 rounded-lg border border-indigo-500/30"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;h5 className="font-medium text-indigo-100 mb-2"&gt;Sun: Recovery&lt;/h5&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;p className="text-indigo-200 text-sm"&gt;Gentle preparation flow&lt;/p&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">        </span>{/* Legend */}</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div className="mt-6 text-center"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;div className="flex justify-center gap-6 flex-wrap text-sm"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;Activity className="w-4 h-4 text-red-500" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;span&gt;Workout&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;Flame className="w-4 h-4 text-orange-500" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;span&gt;Sauna&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;Droplets className="w-4 h-4 text-blue-500" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;span&gt;Cold Plunge&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;Target className="w-4 h-4 text-green-500" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;span&gt;Mobility&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div className="flex items-center gap-2"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;Target className="w-4 h-4 text-purple-500" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">              </span>&lt;span&gt;Knees Over Toes&lt;/span&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>);</p>
+<p class="p1">};</p>
+<p class="p2"><br></p>
+<p class="p1">export default WorkoutTrackerApp;</p>
+</body>
+</html>
