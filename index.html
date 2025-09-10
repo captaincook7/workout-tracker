@@ -4,522 +4,491 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Optimal Workout Tracker</title>
-    
-    <!-- PWA Configuration -->
-    <meta name="theme-color" content="#1e293b">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Workout Tracker">
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        slate: {
-                            800: '#1e293b',
-                            700: '#334155',
-                            900: '#0f172a'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        /* Custom scrollbar for mobile */
-        ::-webkit-scrollbar {
-            width: 4px;
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom right, #0f172a, #1e40af, #0f172a);
+            min-height: 100vh;
+            color: white;
         }
-        ::-webkit-scrollbar-track {
-            background: #1e293b;
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #3b82f6;
-            border-radius: 2px;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
-        
-        /* Prevent zoom on mobile inputs */
-        input, select, textarea {
-            font-size: 16px;
+        .task-complete {
+            transition: all 0.3s ease;
         }
-        
-        /* Smooth transitions */
-        * {
-            transition: all 0.2s ease;
+        .reminder-notification {
+            animation: slideIn 0.5s ease-out;
         }
-        
-        /* Loading animation */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        
-        /* Custom styles for icons */
-        .icon {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-        }
-        
-        .icon-workout {
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 12h-4l-3 9L9 3l-3 9H2'/%3E%3C/svg%3E");
-            background-color: #ef4444;
-        }
-        
-        .icon-sauna {
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z'/%3E%3Cpath d='M19 10v4a7 7 0 0 1-14 0v-4'/%3E%3Cline x1='12' y1='19' x2='12' y2='22'/%3E%3Cline x1='8' y1='22' x2='16' y2='22'/%3E%3C/svg%3E");
-            background-color: #f97316;
-        }
-        
-        .icon-cold {
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 17a5 5 0 0 0-10 0'/%3E%3Cpath d='M12 3v19'/%3E%3Cpath d='m12 15-3 3m0-6 3 3'/%3E%3Cpath d='m15 12-3 3m0-6 3 3'/%3E%3C/svg%3E");
-            background-color: #3b82f6;
-        }
-        
-        .icon-mobility {
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m12 12 4-4'/%3E%3Cpath d='m12 12 4 4'/%3E%3Cpath d='m12 12-4 4'/%3E%3Cpath d='m12 12-4-4'/%3E%3C/svg%3E");
-            background-color: #22c55e;
-        }
-        
-        .icon-kot {
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='m12 12 4-4'/%3E%3Cpath d='m12 12 4 4'/%3E%3Cpath d='m12 12-4 4'/%3E%3Cpath d='m12 12-4-4'/%3E%3C/svg%3E");
-            background-color: #a855f7;
-        }
-        
-        .icon-recovery {
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpolyline points='12 6 12 12 16 14'/%3E%3C/svg%3E");
-            background-color: #6b7280;
-        }
-        
-        .icon-default {
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3C/svg%3E");
-            background-color: #9ca3af;
-        }
-        
-        .icon-calendar {
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
-            background-color: #60a5fa;
-        }
-        
-        .icon-alert {
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='8' x2='12' y2='12'/%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'/%3E%3C/svg%3E");
-            background-color: #fbbf24;
-        }
-        
-        .icon-check {
-            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M22 11.08V12a10 10 0 1 1-5.93-9.14'/%3E%3Cpolyline points='22 4 12 14.01 9 11.01'/%3E%3C/svg%3E");
-            background-color: #34d399;
-        }
+        .icon-workout { color: #ef4444; }
+        .icon-sauna { color: #f97316; }
+        .icon-cold { color: #3b82f6; }
+        .icon-mobility { color: #22c55e; }
+        .icon-kot { color: #a855f7; }
+        .icon-recovery { color: #6b7280; }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 min-h-screen text-white">
-    <div id="app" class="container mx-auto px-4 py-8">
-        <!-- Content will be rendered here by JavaScript -->
-    </div>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
 
-    <script>
-        // Workout Tracker Application
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize the app
-            initWorkoutTracker();
-        });
+        const WorkoutTrackerApp = () => {
+            const [currentDay, setCurrentDay] = useState(new Date().getDay());
+            const [completedItems, setCompletedItems] = useState({});
+            const [currentTime, setCurrentTime] = useState(new Date());
+            const [activeReminders, setActiveReminders] = useState([]);
 
-        function initWorkoutTracker() {
-            // Get today's day (0 = Sunday, 1 = Monday, etc.)
-            const today = new Date().getDay();
-            
-            // Get completed items from localStorage or initialize empty object
-            let completedItems = {};
-            try {
-                const saved = localStorage.getItem('workoutProgress');
-                completedItems = saved ? JSON.parse(saved) : {};
-            } catch (e) {
-                console.error('Error loading saved progress:', e);
-            }
-            
             // Weekly schedule data
             const weeklySchedule = {
                 1: { // Monday
                     name: 'F45 Strength + Evening Recovery',
                     morning: [
-                        { id: 'm1_mon', time: '6:15-7:00', task: 'F45 strength/resistance class', type: 'workout' },
-                        { id: 'm2_mon', time: '7:00-7:15', task: 'Quick cool-down and shower', type: 'recovery' }
+                        { id: 'm1', time: '6:15-7:00', task: 'F45 strength/resistance class', type: 'workout' },
+                        { id: 'm2', time: '7:00-7:15', task: 'Quick cool-down and shower', type: 'recovery' }
                     ],
                     evening: [
-                        { id: 'e1_mon', time: '6:00-6:20', task: 'Sauna session (165-185°F)', type: 'sauna' },
-                        { id: 'e2_mon', time: '6:20-6:23', task: 'Cold plunge (50-59°F)', type: 'cold' },
-                        { id: 'e3_mon', time: '6:25-6:40', task: 'Upper body mobility/stretching', type: 'mobility', video: 'https://www.youtube.com/watch?v=8lDC4Ri9zAQ', title: 'Upper Body Mobility Flow - Tom Merrick' }
+                        { id: 'e1', time: '6:00-6:20', task: 'Sauna session (165-185°F)', type: 'sauna' },
+                        { id: 'e2', time: '6:20-6:23', task: 'Cold plunge (50-59°F)', type: 'cold' },
+                        { id: 'e3', time: '6:25-6:40', task: 'Upper body mobility/stretching', type: 'mobility' }
                     ]
                 },
                 2: { // Tuesday
                     name: 'Active Recovery + Knees Over Toes',
                     morning: [
-                        { id: 'm1_tue', time: 'Flexible', task: 'Light walk or gentle yoga (20-30 min)', type: 'recovery' }
+                        { id: 'm1', time: 'Flexible', task: 'Light walk or gentle yoga (20-30 min)', type: 'recovery' }
                     ],
                     evening: [
-                        { id: 'e1_tue', time: '6:00-6:15', task: 'Knees Over Toes exercises (Session 1)', type: 'kot', video: 'https://www.youtube.com/watch?v=Ht4Z2Ql9c_o', title: 'ATG Split Squat Progression - Ben Patrick' },
-                        { id: 'e2_tue', time: '6:15-6:35', task: 'Full body mobility work', type: 'mobility', video: 'https://www.youtube.com/watch?v=L_xrDAtykMI', title: 'Full Body Flow - Yoga with Adriene' },
-                        { id: 'e3_tue', time: '6:35-6:50', task: 'Optional relaxation sauna (150-165°F)', type: 'sauna' }
+                        { id: 'e1', time: '6:00-6:15', task: 'Knees Over Toes exercises (Session 1)', type: 'kot' },
+                        { id: 'e2', time: '6:15-6:35', task: 'Full body mobility work', type: 'mobility' },
+                        { id: 'e3', time: '6:35-6:50', task: 'Optional relaxation sauna (150-165°F)', type: 'sauna' }
                     ]
                 },
                 3: { // Wednesday
                     name: 'F45 Cardio + Post-Workout Contrast',
                     morning: [
-                        { id: 'm1_wed', time: '6:15-7:00', task: 'F45 cardio/HIIT class', type: 'workout' },
-                        { id: 'm2_wed', time: '7:05-7:15', task: 'Post-workout sauna (wait 10 min)', type: 'sauna' },
-                        { id: 'm3_wed', time: '7:15-7:18', task: 'Cold plunge', type: 'cold' },
-                        { id: 'm4_wed', time: '7:18-7:25', task: 'Quick shower', type: 'recovery' }
+                        { id: 'm1', time: '6:15-7:00', task: 'F45 cardio/HIIT class', type: 'workout' },
+                        { id: 'm2', time: '7:05-7:15', task: 'Post-workout sauna (wait 10 min)', type: 'sauna' },
+                        { id: 'm3', time: '7:15-7:18', task: 'Cold plunge', type: 'cold' },
+                        { id: 'm4', time: '7:18-7:25', task: 'Quick shower', type: 'recovery' }
                     ],
                     evening: [
-                        { id: 'e1_wed', time: '6:00-6:15', task: 'Light stretching (lower body focus)', type: 'mobility', video: 'https://www.youtube.com/watch?v=R6zPKURRaAc', title: 'Hip Flexibility & Lower Body - Athlean-X' }
+                        { id: 'e1', time: '6:00-6:15', task: 'Light stretching (lower body focus)', type: 'mobility' }
                     ]
                 },
                 4: { // Thursday
                     name: 'F45 Strength + KOT + Evening Recovery',
                     morning: [
-                        { id: 'm1_thu', time: '6:15-7:00', task: 'F45 strength/resistance class', type: 'workout' },
-                        { id: 'm2_thu', time: '7:00-7:15', task: 'Cool-down and shower', type: 'recovery' }
+                        { id: 'm1', time: '6:15-7:00', task: 'F45 strength/resistance class', type: 'workout' },
+                        { id: 'm2', time: '7:00-7:15', task: 'Cool-down and shower', type: 'recovery' }
                     ],
                     evening: [
-                        { id: 'e1_thu', time: '6:00-6:15', task: 'Knees Over Toes exercises (Session 2)', type: 'kot', video: 'https://www.youtube.com/watch?v=xBP4VN7K_5w', title: 'Complete KOT Routine - Knees Over Toes Guy' },
-                        { id: 'e2_thu', time: '6:15-6:35', task: 'Sauna session (165-185°F)', type: 'sauna' },
-                        { id: 'e3_thu', time: '6:35-6:38', task: 'Cold plunge', type: 'cold' },
-                        { id: 'e4_thu', time: '6:40-7:00', task: 'Targeted mobility work', type: 'mobility', video: 'https://www.youtube.com/watch?v=qDwCQw7yHzE', title: 'Thoracic Spine Mobility - FRC Mobility' }
+                        { id: 'e1', time: '6:00-6:15', task: 'Knees Over Toes exercises (Session 2)', type: 'kot' },
+                        { id: 'e2', time: '6:15-6:35', task: 'Sauna session (165-185°F)', type: 'sauna' },
+                        { id: 'e3', time: '6:35-6:38', task: 'Cold plunge', type: 'cold' },
+                        { id: 'e4', time: '6:40-7:00', task: 'Targeted mobility work', type: 'mobility' }
                     ]
                 },
                 5: { // Friday
                     name: 'F45 Hybrid + Quick Recovery',
                     morning: [
-                        { id: 'm1_fri', time: '6:15-7:00', task: 'F45 hybrid class (cardio + strength)', type: 'workout' },
-                        { id: 'm2_fri', time: '7:05-7:13', task: 'Quick sauna (8 min)', type: 'sauna' },
-                        { id: 'm3_fri', time: '7:13-7:15', task: 'Cold plunge (2 min)', type: 'cold' },
-                        { id: 'm4_fri', time: '7:15-7:20', task: 'Quick shower', type: 'recovery' }
+                        { id: 'm1', time: '6:15-7:00', task: 'F45 hybrid class (cardio + strength)', type: 'workout' },
+                        { id: 'm2', time: '7:05-7:13', task: 'Quick sauna (8 min)', type: 'sauna' },
+                        { id: 'm3', time: '7:13-7:15', task: 'Cold plunge (2 min)', type: 'cold' },
+                        { id: 'm4', time: '7:15-7:20', task: 'Quick shower', type: 'recovery' }
                     ],
                     evening: [
-                        { id: 'e1_fri', time: 'Optional', task: 'Rest or gentle movement', type: 'recovery' }
+                        { id: 'e1', time: 'Optional', task: 'Rest or gentle movement', type: 'recovery' }
                     ]
                 },
                 6: { // Saturday
                     name: 'Extended Recovery, Mobility & KOT',
                     morning: [
-                        { id: 'm1_sat', time: 'Flexible', task: 'Knees Over Toes exercises (Session 3)', type: 'kot', video: 'https://www.youtube.com/watch?v=vYPh3jsWzAo', title: 'Advanced KOT Exercises - Ben Patrick' },
-                        { id: 'm2_sat', time: 'Flexible', task: 'Mobility/yoga session (30-45 min)', type: 'mobility', video: 'https://www.youtube.com/watch?v=X3-gKPNyrTA', title: 'Morning Yoga Flow - Yoga with Kassandra' },
-                        { id: 'm3_sat', time: 'Flexible', task: 'Extended sauna session (20-25 min)', type: 'sauna' },
-                        { id: 'm4_sat', time: 'Flexible', task: 'Cold plunge (3-4 min)', type: 'cold' }
+                        { id: 'm1', time: 'Flexible', task: 'Knees Over Toes exercises (Session 3)', type: 'kot' },
+                        { id: 'm2', time: 'Flexible', task: 'Mobility/yoga session (30-45 min)', type: 'mobility' },
+                        { id: 'm3', time: 'Flexible', task: 'Extended sauna session (20-25 min)', type: 'sauna' },
+                        { id: 'm4', time: 'Flexible', task: 'Cold plunge (3-4 min)', type: 'cold' }
                     ],
                     evening: [
-                        { id: 'e1_sat', time: 'Optional', task: 'Light cardio (walk, bike, swim)', type: 'recovery' }
+                        { id: 'e1', time: 'Optional', task: 'Light cardio (walk, bike, swim)', type: 'recovery' }
                     ]
                 },
                 0: { // Sunday
                     name: 'Complete Rest or Gentle Movement',
                     morning: [
-                        { id: 'm1_sun', time: 'Optional', task: 'Light walk or gentle yoga', type: 'recovery' }
+                        { id: 'm1', time: 'Optional', task: 'Light walk or gentle yoga', type: 'recovery' }
                     ],
                     evening: [
-                        { id: 'e1_sun', time: '6:00-6:20', task: 'Preparation mobility for upcoming week', type: 'mobility', video: 'https://www.youtube.com/watch?v=PpEaFLDc_w4', title: 'Recovery Flow - Tom Merrick' }
+                        { id: 'e1', time: '6:00-6:20', task: 'Preparation mobility for upcoming week', type: 'mobility' }
                     ]
                 }
             };
 
-            // Day names for display
-            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-            
-            // Get today's schedule
-            const todaySchedule = weeklySchedule[today] || { name: 'Rest Day', morning: [], evening: [] };
-            
-            // Count completed tasks
-            const completedToday = Object.keys(completedItems).filter(key => completedItems[key]).length;
+            // Smart reminders based on calendar integration simulation
+            const smartReminders = [
+                { time: '10:30', message: 'Take a 5-minute movement break - try some ankle circles and calf raises', type: 'mobility' },
+                { time: '14:00', message: 'Lunch break mobility: Wall sit (30 seconds) and heel walks', type: 'kot' },
+                { time: '16:30', message: 'Afternoon energy boost: 10 deep breaths and shoulder rolls', type: 'mobility' },
+                { time: '17:00', message: 'Workday ending soon - prepare for evening recovery session!', type: 'reminder' }
+            ];
+
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setCurrentTime(new Date());
+                    checkForReminders();
+                }, 60000); // Check every minute
+
+                return () => clearInterval(timer);
+            }, []);
+
+            const checkForReminders = () => {
+                const now = new Date();
+                const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+                
+                const reminder = smartReminders.find(r => r.time === timeString);
+                if (reminder && !activeReminders.find(ar => ar.time === timeString)) {
+                    setActiveReminders(prev => [...prev, reminder]);
+                }
+            };
+
+            const toggleComplete = (itemId) => {
+                setCompletedItems(prev => ({
+                    ...prev,
+                    [itemId]: !prev[itemId]
+                }));
+            };
+
+            const dismissReminder = (time) => {
+                setActiveReminders(prev => prev.filter(r => r.time !== time));
+            };
+
+            const getTypeIcon = (type) => {
+                switch (type) {
+                    case 'workout': return '💪';
+                    case 'sauna': return '🔥';
+                    case 'cold': return '❄️';
+                    case 'mobility': return '🧘';
+                    case 'kot': return '🦵';
+                    case 'recovery': return '⏱️';
+                    default: return '○';
+                }
+            };
+
+            const getTypeClass = (type) => {
+                switch (type) {
+                    case 'workout': return 'icon-workout';
+                    case 'sauna': return 'icon-sauna';
+                    case 'cold': return 'icon-cold';
+                    case 'mobility': return 'icon-mobility';
+                    case 'kot': return 'icon-kot';
+                    case 'recovery': return 'icon-recovery';
+                    default: return 'text-gray-400';
+                }
+            };
+
+            const getTodaySchedule = () => {
+                return weeklySchedule[currentDay] || { name: 'Rest Day', morning: [], evening: [] };
+            };
+
+            const todaySchedule = getTodaySchedule();
+            const completedToday = Object.values(completedItems).filter(Boolean).length;
             const totalToday = todaySchedule.morning.length + todaySchedule.evening.length;
-            
-            // Current time
-            const currentTime = new Date();
-            
-            // Render the application
-            renderWorkoutTracker({
-                dayNames,
-                today,
-                todaySchedule,
-                completedItems,
-                completedToday,
-                totalToday,
-                currentTime
-            });
-        }
 
-        function renderWorkoutTracker(data) {
-            const app = document.getElementById('app');
-            
-            app.innerHTML = `
-                <!-- Header -->
-                <div class="text-center mb-8">
-                    <h1 class="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                        Optimal Workout Tracker
-                    </h1>
-                    <p class="text-slate-300">Your complete fitness, recovery & mobility companion</p>
-                </div>
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-                <!-- Day Navigation -->
-                <div class="flex justify-center mb-6 gap-2 flex-wrap">
-                    ${data.dayNames.map((day, index) => `
-                        <button
-                            onclick="handleDayChange(${index})"
-                            class="px-4 py-2 rounded-lg transition-all ${data.today === index ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}"
-                        >
-                            ${day.slice(0, 3)}
-                        </button>
-                    `).join('')}
-                </div>
-
-                <!-- Progress Overview -->
-                <div class="bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700">
-                    <div class="flex items-center justify-between mb-4 flex-wrap gap-4">
-                        <h2 class="text-2xl font-bold">${data.dayNames[data.today]} - ${data.todaySchedule.name}</h2>
-                        <div class="flex items-center gap-2">
-                            <span class="icon icon-calendar"></span>
-                            <span class="text-slate-300">${data.currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            return (
+                <div className="min-h-screen p-4 fade-in">
+                    <div className="max-w-4xl mx-auto">
+                        {/* Header */}
+                        <div className="text-center mb-8">
+                            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                                Optimal Workout Tracker
+                            </h1>
+                            <p className="text-slate-300">Your complete fitness, recovery & mobility companion</p>
                         </div>
-                    </div>
-                    
-                    <div class="w-full bg-slate-700 rounded-full h-3 mb-2">
-                        <div 
-                            class="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300"
-                            style="width: ${data.totalToday > 0 ? (data.completedToday / data.totalToday) * 100 : 0}%"
-                        ></div>
-                    </div>
-                    <p class="text-slate-300 text-sm">${data.completedToday} of ${data.totalToday} tasks completed today</p>
-                </div>
 
-                <!-- Morning Schedule -->
-                ${data.todaySchedule.morning.length > 0 ? `
-                    <div class="bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700">
-                        <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
-                            Morning Schedule (6:15am - 8:15am)
-                        </h3>
-                        <div class="space-y-3">
-                            ${data.todaySchedule.morning.map(item => renderTaskItem(item, data.completedItems)).join('')}
+                        {/* Day Navigation */}
+                        <div className="flex justify-center mb-6 gap-2 flex-wrap">
+                            {dayNames.map((day, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setCurrentDay(index)}
+                                    className={`px-4 py-2 rounded-lg transition-all ${
+                                        currentDay === index
+                                            ? 'bg-blue-600 text-white shadow-lg'
+                                            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                    }`}
+                                >
+                                    {day.slice(0, 3)}
+                                </button>
+                            ))}
                         </div>
-                    </div>
-                ` : ''}
 
-                <!-- Evening Schedule -->
-                ${data.todaySchedule.evening.length > 0 ? `
-                    <div class="bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700">
-                        <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
-                            <div class="w-3 h-3 rounded-full bg-purple-400"></div>
-                            Evening Schedule
-                        </h3>
-                        <div class="space-y-3">
-                            ${data.todaySchedule.evening.map(item => renderTaskItem(item, data.completedItems)).join('')}
-                        </div>
-                    </div>
-                ` : ''}
-
-                <!-- Quick Actions -->
-                <div class="bg-slate-800/50 backdrop-blur rounded-2xl p-6 border border-slate-700 mb-6">
-                    <h3 class="text-xl font-bold mb-4">Quick Movement Breaks</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-gradient-to-r from-green-600/20 to-blue-600/20 p-4 rounded-lg border border-green-500/30">
-                            <h4 class="font-semibold text-green-100 mb-3 flex items-center gap-2 flex-wrap">
-                                5-Minute Mobility
-                                <a href="https://www.youtube.com/watch?v=2kZhsUm8CeA" target="_blank" rel="noopener noreferrer"
-                                    class="text-xs bg-green-500/30 px-2 py-1 rounded text-green-200 hover:text-green-100">
-                                    📹 Demo
-                                </a>
-                            </h4>
-                            <div class="space-y-2 text-green-200 text-sm">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                                    <span>Neck rolls (5 each direction)</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                                    <span>Shoulder shrugs & arm circles</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                                    <span>Hip circles (10 each way)</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2 h-2 bg-green-400 rounded-full"></div>
-                                    <span>Ankle circles & calf raises</span>
+                        {/* Progress Overview */}
+                        <div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-2xl font-bold">{dayNames[currentDay]} - {todaySchedule.name}</h2>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-blue-400">📅</span>
+                                    <span className="text-slate-300">{currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
                                 </div>
                             </div>
-                            <div class="mt-3 p-2 bg-green-600/10 rounded text-xs text-green-300">
-                                💡 Perfect between long meetings
+                            
+                            <div className="w-full bg-slate-700 rounded-full h-3 mb-2">
+                                <div 
+                                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300"
+                                    style={{ width: totalToday > 0 ? `${(completedToday / totalToday) * 100}%` : '0%' }}
+                                ></div>
+                            </div>
+                            <p className="text-slate-300 text-sm">{completedToday} of {totalToday} tasks completed today</p>
+                        </div>
+
+                        {/* Smart Reminders */}
+                        {activeReminders.length > 0 && (
+                            <div className="mb-6">
+                                {activeReminders.map((reminder, index) => (
+                                    <div key={index} className="bg-gradient-to-r from-yellow-600/20 to-orange-600/20 backdrop-blur rounded-lg p-4 mb-3 border border-yellow-500/30 reminder-notification">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-yellow-400 flex-shrink-0">🔔</span>
+                                                <div>
+                                                    <p className="font-medium text-yellow-100">{reminder.message}</p>
+                                                    <p className="text-yellow-300 text-sm">Suggested at {reminder.time}</p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => dismissReminder(reminder.time)}
+                                                className="text-yellow-300 hover:text-yellow-100 transition-colors text-xl"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Morning Schedule */}
+                        <div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700">
+                            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                                Morning Schedule (6:15am - 8:15am)
+                            </h3>
+                            <div className="space-y-3">
+                                {todaySchedule.morning.map((item) => (
+                                    <div key={item.id} className={`flex items-center gap-4 p-4 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-all task-complete ${completedItems[item.id] ? 'opacity-70' : ''}`}>
+                                        <button
+                                            onClick={() => toggleComplete(item.id)}
+                                            className="flex-shrink-0"
+                                        >
+                                            {completedItems[item.id] ? (
+                                                <span className="text-2xl text-green-400">✅</span>
+                                            ) : (
+                                                <span className="text-2xl text-slate-400 hover:text-slate-300">◯</span>
+                                            )}
+                                        </button>
+                                        <div className="flex-grow">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className={`text-xl ${getTypeClass(item.type)}`}>{getTypeIcon(item.type)}</span>
+                                                <span className="text-sm text-slate-400 font-medium">{item.time}</span>
+                                            </div>
+                                            <p className={`${completedItems[item.id] ? 'line-through text-slate-500' : 'text-slate-100'}`}>
+                                                {item.task}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
-                        
-                        <div class="bg-gradient-to-r from-purple-600/20 to-pink-600/20 p-4 rounded-lg border border-purple-500/30">
-                            <h4 class="font-semibold text-purple-100 mb-3 flex items-center gap-2 flex-wrap">
-                                KOT Quick Hits
-                                <a href="https://www.youtube.com/watch?v=Ht4Z2Ql9c_o" target="_blank" rel="noopener noreferrer"
-                                    class="text-xs bg-purple-500/30 px-2 py-1 rounded text-purple-200 hover:text-purple-100">
-                                    📹 Form
-                                </a>
-                            </h4>
-                            <div class="space-y-2 text-purple-200 text-sm">
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
-                                    <span>Heel walks (10 forward/back)</span>
+
+                        {/* Evening Schedule */}
+                        <div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 mb-6 border border-slate-700">
+                            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-purple-400"></div>
+                                Evening Schedule
+                            </h3>
+                            <div className="space-y-3">
+                                {todaySchedule.evening.map((item) => (
+                                    <div key={item.id} className={`flex items-center gap-4 p-4 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-all task-complete ${completedItems[item.id] ? 'opacity-70' : ''}`}>
+                                        <button
+                                            onClick={() => toggleComplete(item.id)}
+                                            className="flex-shrink-0"
+                                        >
+                                            {completedItems[item.id] ? (
+                                                <span className="text-2xl text-green-400">✅</span>
+                                            ) : (
+                                                <span className="text-2xl text-slate-400 hover:text-slate-300">◯</span>
+                                            )}
+                                        </button>
+                                        <div className="flex-grow">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className={`text-xl ${getTypeClass(item.type)}`}>{getTypeIcon(item.type)}</span>
+                                                <span className="text-sm text-slate-400 font-medium">{item.time}</span>
+                                            </div>
+                                            <p className={`${completedItems[item.id] ? 'line-through text-slate-500' : 'text-slate-100'}`}>
+                                                {item.task}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Quick Actions */}
+                        <div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 border border-slate-700 mb-6">
+                            <h3 className="text-xl font-bold mb-4">Quick Movement Breaks</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-gradient-to-r from-green-600/20 to-blue-600/20 p-4 rounded-lg border border-green-500/30">
+                                    <h4 className="font-semibold text-green-100 mb-3 flex items-center gap-2">
+                                        5-Minute Mobility
+                                        <a 
+                                            href="https://www.youtube.com/watch?v=2kZhsUm8CeA" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-xs bg-green-500/30 px-2 py-1 rounded text-green-200 hover:text-green-100"
+                                        >
+                                            📹 Demo
+                                        </a>
+                                    </h4>
+                                    <div className="space-y-2 text-green-200 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                            <span>Neck rolls (5 each direction)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                            <span>Shoulder shrugs & arm circles</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                            <span>Hip circles (10 each way)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                            <span>Ankle circles & calf raises</span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 p-2 bg-green-600/10 rounded text-xs text-green-300">
+                                        💡 Perfect between long meetings
+                                    </div>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
-                                    <span>Wall sit (30 seconds)</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
-                                    <span>Single-leg glute bridges (10 each)</span>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
-                                    <span>Calf raises (15 total)</span>
+                                
+                                <div className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 p-4 rounded-lg border border-purple-500/30">
+                                    <h4 className="font-semibold text-purple-100 mb-3 flex items-center gap-2">
+                                        KOT Quick Hits
+                                        <a 
+                                            href="https://www.youtube.com/watch?v=Ht4Z2Ql9c_o" 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            className="text-xs bg-purple-500/30 px-2 py-1 rounded text-purple-200 hover:text-purple-100"
+                                        >
+                                            📹 Form
+                                        </a>
+                                    </h4>
+                                    <div className="space-y-2 text-purple-200 text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                                            <span>Heel walks (10 forward/back)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                                            <span>Wall sit (30 seconds)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                                            <span>Single-leg glute bridges (10 each)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 bg-purple-400 rounded-full"></div>
+                                            <span>Calf raises (15 total)</span>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 p-2 bg-purple-600/10 rounded text-xs text-purple-300">
+                                        💪 Builds bulletproof knees daily
+                                    </div>
                                 </div>
                             </div>
-                            <div class="mt-3 p-2 bg-purple-600/10 rounded text-xs text-purple-300">
-                                💪 Builds bulletproof knees daily
+                        </div>
+
+                        {/* Weekly Mobility Focus */}
+                        <div className="bg-slate-800/50 backdrop-blur rounded-2xl p-6 border border-slate-700">
+                            <h3 className="text-xl font-bold mb-4">Weekly Mobility Targets</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                <div className="bg-gradient-to-b from-red-600/20 to-red-700/20 p-3 rounded-lg border border-red-500/30">
+                                    <h5 className="font-medium text-red-100 mb-2">Mon: Upper Body</h5>
+                                    <p className="text-red-200 text-sm">Shoulders, neck, thoracic spine</p>
+                                </div>
+                                <div className="bg-gradient-to-b from-green-600/20 to-green-700/20 p-3 rounded-lg border border-green-500/30">
+                                    <h5 className="font-medium text-green-100 mb-2">Tue: Full Body</h5>
+                                    <p className="text-green-200 text-sm">Dynamic movement flow</p>
+                                </div>
+                                <div className="bg-gradient-to-b from-blue-600/20 to-blue-700/20 p-3 rounded-lg border border-blue-500/30">
+                                    <h5 className="font-medium text-blue-100 mb-2">Wed: Hips & Legs</h5>
+                                    <p className="text-blue-200 text-sm">Post-cardio recovery focus</p>
+                                </div>
+                                <div className="bg-gradient-to-b from-yellow-600/20 to-yellow-700/20 p-3 rounded-lg border border-yellow-500/30">
+                                    <h5 className="font-medium text-yellow-100 mb-2">Thu: Spine</h5>
+                                    <p className="text-yellow-200 text-sm">Thoracic & cervical mobility</p>
+                                </div>
+                                <div className="bg-gradient-to-b from-purple-600/20 to-purple-700/20 p-3 rounded-lg border border-purple-500/30">
+                                    <h5 className="font-medium text-purple-100 mb-2">Sat: Comprehensive</h5>
+                                    <p className="text-purple-200 text-sm">Extended yoga flow</p>
+                                </div>
+                                <div className="bg-gradient-to-b from-indigo-600/20 to-indigo-700/20 p-3 rounded-lg border border-indigo-500/30">
+                                    <h5 className="font-medium text-indigo-100 mb-2">Sun: Recovery</h5>
+                                    <p className="text-indigo-200 text-sm">Gentle preparation flow</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Legend */}
+                        <div className="mt-6 text-center">
+                            <div className="flex justify-center gap-6 flex-wrap text-sm">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-red-500">💪</span>
+                                    <span>Workout</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-orange-500">🔥</span>
+                                    <span>Sauna</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-blue-500">❄️</span>
+                                    <span>Cold Plunge</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-green-500">🧘</span>
+                                    <span>Mobility</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-purple-500">🦵</span>
+                                    <span>Knees Over Toes</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            );
+        };
 
-                <!-- Weekly Mobility Focus -->
-                <div class="bg-slate-800/50 backdrop-blur rounded-2xl p-6 border border-slate-700">
-                    <h3 class="text-xl font-bold mb-4">Weekly Mobility Targets</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="bg-gradient-to-b from-red-600/20 to-red-700/20 p-3 rounded-lg border border-red-500/30">
-                            <h5 class="font-medium text-red-100 mb-2">Mon: Upper Body</h5>
-                            <p class="text-red-200 text-sm">Shoulders, neck, thoracic spine</p>
-                        </div>
-                        <div class="bg-gradient-to-b from-green-600/20 to-green-700/20 p-3 rounded-lg border border-green-500/30">
-                            <h5 class="font-medium text-green-100 mb-2">Tue: Full Body</h5>
-                            <p class="text-green-200 text-sm">Dynamic movement flow</p>
-                        </div>
-                        <div class="bg-gradient-to-b from-blue-600/20 to-blue-700/20 p-3 rounded-lg border border-blue-500/30">
-                            <h5 class="font-medium text-blue-100 mb-2">Wed: Hips & Legs</h5>
-                            <p class="text-blue-200 text-sm">Post-cardio recovery focus</p>
-                        </div>
-                        <div class="bg-gradient-to-b from-yellow-600/20 to-yellow-700/20 p-3 rounded-lg border border-yellow-500/30">
-                            <h5 class="font-medium text-yellow-100 mb-2">Thu: Spine</h5>
-                            <p class="text-yellow-200 text-sm">Thoracic & cervical mobility</p>
-                        </div>
-                        <div class="bg-gradient-to-b from-purple-600/20 to-purple-700/20 p-3 rounded-lg border border-purple-500/30">
-                            <h5 class="font-medium text-purple-100 mb-2">Sat: Comprehensive</h5>
-                            <p class="text-purple-200 text-sm">Extended yoga flow</p>
-                        </div>
-                        <div class="bg-gradient-to-b from-indigo-600/20 to-indigo-700/20 p-3 rounded-lg border border-indigo-500/30">
-                            <h5 class="font-medium text-indigo-100 mb-2">Sun: Recovery</h5>
-                            <p class="text-indigo-200 text-sm">Gentle preparation flow</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Legend -->
-                <div class="mt-6 text-center">
-                    <div class="flex justify-center gap-6 flex-wrap text-sm">
-                        <div class="flex items-center gap-2">
-                            <span class="icon icon-workout"></span>
-                            <span>Workout</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="icon icon-sauna"></span>
-                            <span>Sauna</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="icon icon-cold"></span>
-                            <span>Cold Plunge</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="icon icon-mobility"></span>
-                            <span>Mobility</span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="icon icon-kot"></span>
-                            <span>Knees Over Toes</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderTaskItem(item, completedItems) {
-            return `
-                <div class="flex items-center gap-4 p-4 bg-slate-700/50 rounded-lg hover:bg-slate-700/70 transition-all">
-                    <button onclick="toggleComplete('${item.id}')" class="flex-shrink-0">
-                        ${completedItems[item.id] ? 
-                            '<span class="icon icon-check"></span>' : 
-                            '<span class="icon icon-default"></span>'
-                        }
-                    </button>
-                    <div class="flex-grow">
-                        <div class="flex items-center gap-2 mb-1 flex-wrap">
-                            <span class="icon icon-${item.type}"></span>
-                            <span class="text-sm text-slate-400 font-medium">${item.time}</span>
-                            ${item.video ? `
-                                <a href="${item.video}" target="_blank" rel="noopener noreferrer"
-                                    class="text-blue-400 hover:text-blue-300 text-xs bg-blue-500/20 px-2 py-1 rounded">
-                                    📹 Video
-                                </a>
-                            ` : ''}
-                        </div>
-                        <p class="${completedItems[item.id] ? 'line-through text-slate-500' : 'text-slate-100'}">
-                            ${item.task}
-                        </p>
-                        ${item.title ? `
-                            <p class="text-slate-400 text-xs mt-1 italic">${item.title}</p>
-                        ` : ''}
-                    </div>
-                </div>
-            `;
-        }
-
-        function toggleComplete(itemId) {
-            let completedItems = {};
-            try {
-                const saved = localStorage.getItem('workoutProgress');
-                completedItems = saved ? JSON.parse(saved) : {};
-            } catch (e) {
-                console.error('Error loading saved progress:', e);
-            }
-            
-            completedItems[itemId] = !completedItems[itemId];
-            
-            try {
-                localStorage.setItem('workoutProgress', JSON.stringify(completedItems));
-            } catch (e) {
-                console.error('Error saving progress:', e);
-            }
-            
-            // Re-render the app
-            initWorkoutTracker();
-        }
-
-        function handleDayChange(dayIndex) {
-            // For now, just re-render with the selected day
-            // In a more complete implementation, you would update the state
-            initWorkoutTracker();
-        }
-
-        // Make functions available globally for onclick handlers
-        window.toggleComplete = toggleComplete;
-        window.handleDayChange = handleDayChange;
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<WorkoutTrackerApp />);
     </script>
 </body>
 </html>
