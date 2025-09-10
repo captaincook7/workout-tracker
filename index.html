@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Workout Tracker">
   
-  <!-- Tailwind CSS via CDN (with production warning suppressed) -->
+  <!-- Tailwind CSS -->
   <script>
     // Suppress Tailwind development warning
     window.tailwindConfig = { silent: true };
@@ -88,6 +88,9 @@
       if (typeof ReactDOM === 'undefined') {
         throw new Error("ReactDOM is not loaded");
       }
+      if (typeof Babel === 'undefined') {
+        throw new Error("Babel is not loaded");
+      }
       if (typeof lucide === 'undefined') {
         throw new Error("Lucide Icons are not loaded");
       }
@@ -98,17 +101,22 @@
       checkDependencies();
       
       const { useState, useEffect, createElement } = React;
-      const { 
-        CheckCircle, 
-        Circle, 
-        Clock, 
-        Calendar, 
-        Target, 
-        Flame, 
-        Droplets, 
-        Activity, 
-        AlertCircle 
-      } = lucide;
+      
+      // Extract Lucide icons safely
+      let LucideIcons = {};
+      if (typeof lucide !== 'undefined') {
+        LucideIcons = {
+          CheckCircle: lucide.CheckCircle,
+          Circle: lucide.Circle,
+          Clock: lucide.Clock,
+          Calendar: lucide.Calendar,
+          Target: lucide.Target,
+          Flame: lucide.Flame,
+          Droplets: lucide.Droplets,
+          Activity: lucide.Activity,
+          AlertCircle: lucide.AlertCircle
+        };
+      }
 
       const WorkoutTrackerApp = () => {
         const [currentDay, setCurrentDay] = useState(new Date().getDay());
@@ -250,13 +258,13 @@
         const getTypeIcon = (type) => {
           const iconProps = { size: 20 };
           switch (type) {
-            case 'workout': return createElement(Activity, { ...iconProps, className: "w-5 h-5 text-red-500" });
-            case 'sauna': return createElement(Flame, { ...iconProps, className: "w-5 h-5 text-orange-500" });
-            case 'cold': return createElement(Droplets, { ...iconProps, className: "w-5 h-5 text-blue-500" });
-            case 'mobility': return createElement(Target, { ...iconProps, className: "w-5 h-5 text-green-500" });
-            case 'kot': return createElement(Target, { ...iconProps, className: "w-5 h-5 text-purple-500" });
-            case 'recovery': return createElement(Clock, { ...iconProps, className: "w-5 h-5 text-gray-500" });
-            default: return createElement(Circle, { ...iconProps, className: "w-5 h-5 text-gray-400" });
+            case 'workout': return createElement(LucideIcons.Activity, { ...iconProps, className: "w-5 h-5 text-red-500" });
+            case 'sauna': return createElement(LucideIcons.Flame, { ...iconProps, className: "w-5 h-5 text-orange-500" });
+            case 'cold': return createElement(LucideIcons.Droplets, { ...iconProps, className: "w-5 h-5 text-blue-500" });
+            case 'mobility': return createElement(LucideIcons.Target, { ...iconProps, className: "w-5 h-5 text-green-500" });
+            case 'kot': return createElement(LucideIcons.Target, { ...iconProps, className: "w-5 h-5 text-purple-500" });
+            case 'recovery': return createElement(LucideIcons.Clock, { ...iconProps, className: "w-5 h-5 text-gray-500" });
+            default: return createElement(LucideIcons.Circle, { ...iconProps, className: "w-5 h-5 text-gray-400" });
           }
         };
 
@@ -280,8 +288,8 @@
               className: "flex-shrink-0"
             },
               completedItems[item.id] ? 
-                createElement(CheckCircle, { size: 24, className: "w-6 h-6 text-green-400" }) :
-                createElement(Circle, { size: 24, className: "w-6 h-6 text-slate-400 hover:text-slate-300" })
+                createElement(LucideIcons.CheckCircle, { size: 24, className: "w-6 h-6 text-green-400" }) :
+                createElement(LucideIcons.Circle, { size: 24, className: "w-6 h-6 text-slate-400 hover:text-slate-300" })
             ),
             createElement('div', { className: "flex-grow" },
               createElement('div', { className: "flex items-center gap-2 mb-1 flex-wrap" },
@@ -332,7 +340,7 @@
               createElement('div', { className: "flex items-center justify-between mb-4 flex-wrap gap-4" },
                 createElement('h2', { className: "text-2xl font-bold" }, `${dayNames[currentDay]} - ${todaySchedule.name}`),
                 createElement('div', { className: "flex items-center gap-2" },
-                  createElement(Calendar, { size: 20, className: "w-5 h-5 text-blue-400" }),
+                  createElement(LucideIcons.Calendar, { size: 20, className: "w-5 h-5 text-blue-400" }),
                   createElement('span', { className: "text-slate-300" }, 
                     currentTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
                   )
@@ -359,7 +367,7 @@
                 },
                   createElement('div', { className: "flex items-start justify-between" },
                     createElement('div', { className: "flex items-center gap-3" },
-                      createElement(AlertCircle, { size: 20, className: "w-5 h-5 text-yellow-400 flex-shrink-0" }),
+                      createElement(LucideIcons.AlertCircle, { size: 20, className: "w-5 h-5 text-yellow-400 flex-shrink-0" }),
                       createElement('div', null,
                         createElement('p', { className: "font-medium text-yellow-100" }, reminder.message),
                         createElement('p', { className: "text-yellow-300 text-sm" }, `Suggested at ${reminder.time}`)
@@ -503,23 +511,23 @@
             createElement('div', { className: "mt-6 text-center" },
               createElement('div', { className: "flex justify-center gap-6 flex-wrap text-sm" },
                 createElement('div', { className: "flex items-center gap-2" },
-                  createElement(Activity, { size: 16, className: "w-4 h-4 text-red-500" }),
+                  createElement(LucideIcons.Activity, { size: 16, className: "w-4 h-4 text-red-500" }),
                   createElement('span', null, "Workout")
                 ),
                 createElement('div', { className: "flex items-center gap-2" },
-                  createElement(Flame, { size: 16, className: "w-4 h-4 text-orange-500" }),
+                  createElement(LucideIcons.Flame, { size: 16, className: "w-4 h-4 text-orange-500" }),
                   createElement('span', null, "Sauna")
                 ),
                 createElement('div', { className: "flex items-center gap-2" },
-                  createElement(Droplets, { size: 16, className: "w-4 h-4 text-blue-500" }),
+                  createElement(LucideIcons.Droplets, { size: 16, className: "w-4 h-4 text-blue-500" }),
                   createElement('span', null, "Cold Plunge")
                 ),
                 createElement('div', { className: "flex items-center gap-2" },
-                  createElement(Target, { size: 16, className: "w-4 h-4 text-green-500" }),
+                  createElement(LucideIcons.Target, { size: 16, className: "w-4 h-4 text-green-500" }),
                   createElement('span', null, "Mobility")
                 ),
                 createElement('div', { className: "flex items-center gap-2" },
-                  createElement(Target, { size: 16, className: "w-4 h-4 text-purple-500" }),
+                  createElement(LucideIcons.Target, { size: 16, className: "w-4 h-4 text-purple-500" }),
                   createElement('span', null, "Knees Over Toes")
                 )
               )
