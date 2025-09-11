@@ -40,6 +40,12 @@
         .icon-mobility { color: #22c55e; }
         .icon-kot { color: #a855f7; }
         .icon-recovery { color: #6b7280; }
+        .reset-btn {
+            background: linear-gradient(to right, #f43f5e, #d946ef);
+        }
+        .reset-btn:hover {
+            background: linear-gradient(to right, #e11d48, #c026d3);
+        }
     </style>
 </head>
 <body>
@@ -163,6 +169,21 @@
                 return () => clearInterval(timer);
             }, []);
 
+            // Check if current day has changed (e.g., after midnight)
+            useEffect(() => {
+                const checkDayChange = () => {
+                    const now = new Date();
+                    const currentDayOfWeek = now.getDay();
+                    if (currentDayOfWeek !== currentDay) {
+                        setCurrentDay(currentDayOfWeek);
+                    }
+                };
+                
+                // Check every hour if the day has changed
+                const dayCheckInterval = setInterval(checkDayChange, 3600000);
+                return () => clearInterval(dayCheckInterval);
+            }, [currentDay]);
+
             const checkForReminders = () => {
                 const now = new Date();
                 const timeString = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -180,6 +201,13 @@
                         ...prev[currentDay],
                         [itemId]: !prev[currentDay][itemId]
                     }
+                }));
+            };
+
+            const resetTasks = () => {
+                setCompletedItems(prev => ({
+                    ...prev,
+                    [currentDay]: {}
                 }));
             };
 
@@ -247,6 +275,13 @@
                                     {day.slice(0, 3)}
                                 </button>
                             ))}
+                            {/* Reset Tasks Button */}
+                            <button
+                                onClick={resetTasks}
+                                className="reset-btn px-4 py-2 rounded-lg text-white transition-all hover:shadow-lg"
+                            >
+                                Reset Day
+                            </button>
                         </div>
 
                         {/* Progress Overview */}
