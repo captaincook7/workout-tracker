@@ -46,6 +46,26 @@
         .reset-btn:hover {
             background: linear-gradient(to right, #e11d48, #c026d3);
         }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: linear-gradient(to bottom right, #1e293b, #374151);
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 400px;
+            width: 90%;
+            border: 1px solid #4b5563;
+        }
     </style>
 </head>
 <body>
@@ -66,6 +86,7 @@
             });
             const [currentTime, setCurrentTime] = useState(new Date());
             const [activeReminders, setActiveReminders] = useState([]);
+            const [showResetModal, setShowResetModal] = useState(false);
 
             // Weekly schedule data
             const weeklySchedule = {
@@ -204,11 +225,13 @@
                 }));
             };
 
-            const resetTasks = () => {
-                setCompletedItems(prev => ({
-                    ...prev,
-                    [currentDay]: {}
-                }));
+            const resetWeek = () => {
+                const emptyState = {};
+                for (let i = 0; i < 7; i++) {
+                    emptyState[i] = {};
+                }
+                setCompletedItems(emptyState);
+                setShowResetModal(false);
             };
 
             const dismissReminder = (time) => {
@@ -275,12 +298,12 @@
                                     {day.slice(0, 3)}
                                 </button>
                             ))}
-                            {/* Reset Tasks Button */}
+                            {/* Reset Week Button */}
                             <button
-                                onClick={resetTasks}
+                                onClick={() => setShowResetModal(true)}
                                 className="reset-btn px-4 py-2 rounded-lg text-white transition-all hover:shadow-lg"
                             >
-                                Reset Day
+                                Reset Week
                             </button>
                         </div>
 
@@ -302,6 +325,32 @@
                             </div>
                             <p className="text-slate-300 text-sm">{completedToday} of {totalToday} tasks completed today</p>
                         </div>
+
+                        {/* Reset Confirmation Modal */}
+                        {showResetModal && (
+                            <div className="modal-overlay">
+                                <div className="modal-content">
+                                    <h3 className="text-xl font-bold mb-4 text-center">Reset Entire Week?</h3>
+                                    <p className="text-slate-300 mb-6 text-center">
+                                        This will clear all completed tasks for every day of the week. This action cannot be undone.
+                                    </p>
+                                    <div className="flex justify-center gap-4">
+                                        <button
+                                            onClick={() => setShowResetModal(false)}
+                                            className="px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-500 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={resetWeek}
+                                            className="reset-btn px-4 py-2 text-white rounded-lg transition-all"
+                                        >
+                                            Reset Week
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Smart Reminders */}
                         {activeReminders.length > 0 && (
